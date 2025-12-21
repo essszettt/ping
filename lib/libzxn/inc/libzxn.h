@@ -236,6 +236,20 @@ type "uint8_t"
 */
 int8_t zxn_msb8(uint8_t uiValue);
 
+/*!
+Trim whitespace from right end of a string
+@param acString Pointer to string to trim
+@return NULL on errors; pointer to string on success 
+*/
+char_t* zxn_rtrim(char_t* acString);
+
+/*!
+Trim whitespace from left end of a string
+@param acString Pointer to string to trim
+@return NULL on errors; pointer to string on success 
+*/
+char_t* zxn_ltrim(char_t* acString);
+
 /*============================================================================*/
 /*                               Klassen                                      */
 /*============================================================================*/

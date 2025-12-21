@@ -1,20 +1,19 @@
 /*-----------------------------------------------------------------------------+
 |                                                                              |
-| filename: ping.h                                                             |
-| project:  ZX Spectrum Next - PING                                            |
-| author:   Stefan Zell                                                        |
-| date:     12/07/2025                                                         |
+| filename: zxn_trim.c                                                         |
+| project:  ZX Spectrum Next - libzxn                                          |
+| author:   S. Zell                                                            |
+| date:     12/21/2025                                                         |
 |                                                                              |
 +------------------------------------------------------------------------------+
 |                                                                              |
 | description:                                                                 |
 |                                                                              |
-| Application to ping remote hosts (using ESP32s "AT+PING")                    |
-| (based on "espbaud" from Allen Albright)                                     |
+| Functions to trim whitespace from strings                                    |
 |                                                                              |
 +------------------------------------------------------------------------------+
 |                                                                              |
-| Copyright (c) 12/07/2025 STZ Engineering                                     |
+| Copyright (c) 12/21/2025 STZ Engineering                                     |
 |                                                                              |
 | This software is provided  "as is",  without warranty of any kind, express   |
 | or implied. In no event shall STZ or its contributors be held liable for any |
@@ -34,45 +33,16 @@
 |                                                                          ;-) |
 +-----------------------------------------------------------------------------*/
 
-#if !defined(__PING_H__)
-  #define __PING_H__
-
 /*============================================================================*/
 /*                               Includes                                     */
 /*============================================================================*/
+#include <stdint.h>
+#include <string.h>
+#include "libzxn.h"
 
 /*============================================================================*/
 /*                               Defines                                      */
 /*============================================================================*/
-/*!
-Maximum length of the hostname
-*/
-#define uiMAX_HOST_NAME (0x100)
-
-/*!
-Maximum length of a AT command to ESP8266
-*/
-#define uiMAX_LEN_CMD (0x80)
-
-/*!
-ESP command to send a PING request
-*/
-#define sCMD_AT_PING "AT+PING"
-
-/*!
-ESP command to read version information
-*/
-#define sCMD_AT_GMR "AT+GMR"
-
-/*!
-Default value for number of ping
-*/
-#define uiDEFAULT_COUNT (5)
-
-/*!
-Default value for interval between pings [ms]
-*/
-#define uiDEFAULT_INTERVAL (100)
 
 /*============================================================================*/
 /*                               Namespaces                                   */
@@ -93,116 +63,6 @@ Default value for interval between pings [ms]
 /*============================================================================*/
 /*                               Typ-Definitionen                             */
 /*============================================================================*/
-/*!
-Enumeration/list of all actions the application can execute
-*/
-typedef enum _action
-{
-  ACTION_NONE = 0,
-  ACTION_HELP,
-  ACTION_INFO,
-  ACTION_ESPINFO,
-  ACTION_PING
-} action_t;
-
-/*!
-In dieser Struktur werden alle globalen Daten der Anwendung gespeichert.
-*/
-typedef struct _appstate
-{
-  /*!
-  If this flag is set, then this structure is initialized
-  */
-  bool bInitialized;
-
-  /*!
-  Action to execute (help, version, ping, ...)
-  */
-  action_t eAction;
-
-  /*!
-  If this flag is set, no messages are printed to the console while pinging.
-  */
-  bool bQuiet;
-
-  /*!
-  Number of repetitions; "0" = endless
-  */
-  uint16_t uiCount;
-
-  /*!
-  Interval between repetitions in [ms]
-  */
-  uint16_t uiInterval;
-
-  /*!
-  Name of the host to ping
-  */
-  char_t acHost[uiMAX_HOST_NAME];
-
-  /*!
-  Backup: Current speed of Z80N
-  */
-  uint8_t uiCpuSpeed;
-
-  /*!
-  Statistical information
-  */
-  struct
-  {
-    /*!
-    Sum of the duration of all pings
-    */
-    uint32_t uiTotal;
-
-    /*!
-    Duration of last ping
-    */
-    uint16_t uiTime;
-
-    /*!
-    Duration of the fastest ping
-    */
-    uint16_t uiMin;
-
-    /*!
-    Duration of the slowest ping
-    */
-    uint16_t uiMax;
-
-    /*!
-    Total number of pings
-    */
-    uint16_t uiPings;
-
-    /*!
-    Number of successful responses
-    */
-    uint16_t uiPongs;
-  } stats;
-
-  /*!
-  */
-  esp_t tEsp;
-
-  struct
-  {
-    /*!
-    Buffer for response from ESP8266
-    */
-    char_t acTxBuffer[uiMAX_LEN_CMD];
-
-    /*!
-    Buffer for response from ESP8266
-    */
-    char_t acRxBuffer[uiMAX_LEN_CMD];
-  } esp;
-  
-  /*!
-  Exitcode of the application, that is handovered to BASIC
-  */
-  int iExitCode;
-} appstate_t;
 
 /*============================================================================*/
 /*                               Prototypen                                   */
@@ -217,7 +77,65 @@ typedef struct _appstate
 /*============================================================================*/
 
 /*----------------------------------------------------------------------------*/
+/* zxn_rtrim()                                                                */
+/*----------------------------------------------------------------------------*/
+char_t* zxn_rtrim(char_t* acString)
+{
+  if (acString)
+  {
+    char_t* pEnd = acString + strlen(acString);
+
+    while (pEnd > acString)
+    {
+      if (' ' >= *pEnd)
+      {
+        *pEnd = '\0';
+      }
+      else
+      {
+        break;
+      }
+
+      --pEnd;
+    }
+
+    return acString;
+  }
+
+  return 0;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* zxn_ltrim()                                                                */
+/*----------------------------------------------------------------------------*/
+char_t* zxn_ltrim(char_t* acString)
+{
+  if (acString)
+  {
+    char_t* pEnd = acString + strlen(acString);
+
+    while (pEnd > acString)
+    {
+      if (' ' >= *pEnd)
+      {
+        *pEnd = '\0';
+      }
+      else
+      {
+        break;
+      }
+
+      --pEnd;
+    }
+
+    return acString;
+  }
+
+  return 0;
+}
+
+
+/*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-
-#endif /* __PING_H__ */

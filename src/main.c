@@ -85,34 +85,39 @@ static appstate_t g_tState;
 /*                               Prototypen                                   */
 /*============================================================================*/
 /*!
-Diese Funktion wird einmalig beim Start der Anwendung zur Initialisierung aller
-benoetigten Ressourcen aufgerufen.
+This function is called once at startup of the application to reserve required
+resources.
 */
 void _construct(void);
 
 /*!
-Diese Funktion wird einmalig beim Beenden der Anwendung zur Freigabe aller
-belegten Ressourcen aufgerufen.
+This function is called once at termination of the application to release all
+used resources.
 */
 void _destruct(void);
 
 /*!
-Diese Funktion interpretiert alle Argumente, die der Anwendung uebergeben
-wurden.
+This function parses all given commandline arguments/options
 */
 int parseArguments(int argc, char* argv[]);
 
 /*!
-Ausgabe der Hilfe dieser Anwendung.
+Print help of the application
 */
 int showHelp(void);
 
 /*!
-Ausgabe der Versionsinformation dieser Anwendung.
+Print version information of the application
 */
 int showInfo(void);
 
 /*!
+Print version info of ESP8266
+*/
+int showInfoEsp(void);
+
+/*!
+Execute pings to given host
 */
 int ping(void);
 
@@ -176,12 +181,16 @@ int main(int argc, char* argv[])
         g_tState.iExitCode = EOK;
         break;
 
+      case ACTION_HELP:
+        g_tState.iExitCode = showHelp();
+        break;
+
       case ACTION_INFO:
         g_tState.iExitCode = showInfo();
         break;
 
-      case ACTION_HELP:
-        g_tState.iExitCode = showHelp();
+      case ACTION_ESPINFO:
+        g_tState.iExitCode = showInfoEsp();
         break;
 
       case ACTION_PING:
@@ -218,6 +227,10 @@ int parseArguments(int argc, char* argv[])
       else if ((0 == strcmp(acArg, "-v")) || (0 == stricmp(acArg, "--version")))
       {
         g_tState.eAction = ACTION_INFO;
+      }
+      else if ((0 == strcmp(acArg, "-V")) /* || (0 == stricmp(acArg, "--Version")) */)
+      {
+        g_tState.eAction = ACTION_ESPINFO;
       }
       else if ((0 == strcmp(acArg, "-q")) || (0 == stricmp(acArg, "--quiet")))
       {
@@ -309,7 +322,7 @@ int showHelp(void)
 
   printf("%s\n\n", VER_FILEDESCRIPTION_STR);
 
-  printf("%s host [-c x][-i x][-q][-h][-v]\n\n", acAppName);
+  printf("%s host [-c x][-i x][-q][-h][-v][-V]\n\n", acAppName);
   //      0.........1.........2.........3.
   printf(" host        host to ping\n");
   printf(" -c[ount]    stop after x pings\n");
@@ -317,6 +330,7 @@ int showHelp(void)
   printf(" -q[uiet]    no screen output\n");
   printf(" -h[elp]     print this help\n");
   printf(" -v[ersion]  print version info\n");
+  printf(" -V[ersion]  print ESP version\n");
 
   return EOK;
 }
@@ -355,6 +369,60 @@ int showInfo(void)
 
 
 /*----------------------------------------------------------------------------*/
+/* showInfoEsp()                                                              */
+/*----------------------------------------------------------------------------*/
+int showInfoEsp(void)
+{
+  printf("ESP8266 version\n");
+
+  snprintf(g_tState.esp.acTxBuffer, sizeof(g_tState.esp.acTxBuffer), sCMD_AT_GMR "\r\n");
+
+  if (EOK == esp_transmit(&g_tState.tEsp, g_tState.esp.acTxBuffer))
+  {
+    DBGPRINTF(">>> %s", g_tState.esp.acTxBuffer);
+
+    for ( ; ; )
+    {
+      if (EOK == esp_receive(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
+      {
+        DBGPRINTF("<<< %s", g_tState.esp.acRxBuffer);
+
+        if (0 != strstr(g_tState.esp.acRxBuffer, "OK"))
+        {
+          break;
+        }
+        else if (0 != strstr(g_tState.esp.acRxBuffer, "ERROR"))
+        {
+          break;
+        }
+        else if (0 != strstr(g_tState.esp.acRxBuffer, "FAIL"))
+        {
+          break;
+        }
+        else
+        {
+          if (zxn_rtrim(g_tState.esp.acRxBuffer))
+          {
+            printf("  %s\n", g_tState.esp.acRxBuffer);
+          }
+        }
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
+  else if (!g_tState.bQuiet)
+  {
+    fprintf(stderr, "unable to send command to ESP8255\n");
+  }
+
+  return EOK;
+}
+
+
+/*----------------------------------------------------------------------------*/
 /* ping()                                                                     */
 /*----------------------------------------------------------------------------*/
 int ping(void)
@@ -367,7 +435,7 @@ int ping(void)
 
   if (!g_tState.bQuiet)
   {
-    printf("Pinging \"%s\" ...\n", g_tState.acHost);
+    printf("Pinging %s ...\n", g_tState.acHost);
   }
 
   g_tState.stats.uiTotal = 0;
@@ -417,7 +485,7 @@ int ping(void)
 
           if (!g_tState.bQuiet)
           {
-            printf("response from \"%s\": time=%u ms\n", g_tState.acHost, g_tState.stats.uiTime);
+            printf("response from %s: time=%u ms\n", g_tState.acHost, g_tState.stats.uiTime);
           }
           break;
         }
@@ -478,7 +546,7 @@ int ping(void)
   /* Create statistics */
   if (!g_tState.bQuiet)
   {
-    printf("\n--- \"%s\" ping statistics ---\n", g_tState.acHost);
+    printf("\n--- %s ping statistics ---\n", g_tState.acHost);
     printf("%u transmitted, %u received, time %u ms\n",
            g_tState.stats.uiPings,
            g_tState.stats.uiPongs,
