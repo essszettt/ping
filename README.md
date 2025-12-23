@@ -12,6 +12,8 @@ This application uses the command "AT+PING" from ESP8266 to execute pings to hos
 
 It is important, that the baudrate of the ESP8266 is set to "115200 bit/s" (default).
 
+![ping.bmp](https://github.com/essszettt/ping/blob/main/doc/ping.bmp)
+
 ---
 
 ### USAGE
@@ -23,3 +25,4 @@ It is important, that the baudrate of the ESP8266 is set to "115200 bit/s" (defa
 ### HISTORY
 
 - 0.0.4  First public release to test
+- 0.0.7  Added timeout detection; fixed user break
