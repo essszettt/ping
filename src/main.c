@@ -41,8 +41,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <intrinsic.h>
 #include <arch/zxn.h>
 #include <input.h>
 #include <input/input_zx.h>
@@ -97,6 +99,15 @@ used resources.
 void _destruct(void);
 
 /*!
+Application local "printf" that handels option "-q" ("quiet") and is able to
+print to stdout/stderr.
+@param pStream Stream to print to ("stdout", "stderr")
+@param acFmt Format string (see "printf")
+@return Errorcode (see "printf")
+*/
+int app_printf(FILE* pStream, char_t* acFmt, ...);
+
+/*!
 This function parses all given commandline arguments/options
 */
 int parseArguments(int argc, char* argv[]);
@@ -114,7 +125,7 @@ int showInfo(void);
 /*!
 Print version info of ESP8266
 */
-int showInfoEsp(void);
+int showInfoEx(void);
 
 /*!
 Execute pings to given host
@@ -189,8 +200,8 @@ int main(int argc, char* argv[])
         g_tState.iExitCode = showInfo();
         break;
 
-      case ACTION_ESPINFO:
-        g_tState.iExitCode = showInfoEsp();
+      case ACTION_INFOEX:
+        g_tState.iExitCode = showInfoEx();
         break;
 
       case ACTION_PING:
@@ -200,6 +211,30 @@ int main(int argc, char* argv[])
   }
 
   return (int) (EOK == g_tState.iExitCode ? 0 : zxn_strerror(g_tState.iExitCode));
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* app_printf()                                                               */
+/*----------------------------------------------------------------------------*/
+int app_printf(FILE* pStream, char_t* acFmt, ...)
+{
+  int iReturn = EINVAL;
+
+  va_list args;
+  va_start(args, acFmt);
+
+  if (pStream && acFmt) 
+  {
+    if (!g_tState.bQuiet)
+    {
+      iReturn = vfprintf(pStream, acFmt, args);
+    }
+  }
+
+  va_end(args);
+
+  return iReturn;
 }
 
 
@@ -230,7 +265,7 @@ int parseArguments(int argc, char* argv[])
       }
       else if ((0 == strcmp(acArg, "-V")) /* || (0 == stricmp(acArg, "--Version")) */)
       {
-        g_tState.eAction = ACTION_ESPINFO;
+        g_tState.eAction = ACTION_INFOEX;
       }
       else if ((0 == strcmp(acArg, "-q")) || (0 == stricmp(acArg, "--quiet")))
       {
@@ -244,7 +279,7 @@ int parseArguments(int argc, char* argv[])
         }
         else
         {
-          fprintf(stderr, "option %s requires a value\n", acArg);
+          app_printf(stderr, "option %s requires a value\n", acArg);
           iReturn = EINVAL;
           break;
         }
@@ -257,14 +292,14 @@ int parseArguments(int argc, char* argv[])
         }
         else
         {
-          fprintf(stderr, "option %s requires a value\n", acArg);
+          app_printf(stderr, "option %s requires a value\n", acArg);
           iReturn = EINVAL;
           break;
         }
       }
       else
       {
-        fprintf(stderr, "unknown option: %s\n", acArg);
+        app_printf(stderr, "unknown option: %s\n", acArg);
         iReturn = EINVAL;
         break;
       }
@@ -277,7 +312,7 @@ int parseArguments(int argc, char* argv[])
       }
       else
       {
-        fprintf(stderr, "unexpected extra argument: %s\n", acArg);
+        app_printf(stderr, "unexpected extra argument: %s\n", acArg);
         iReturn = EINVAL;
         break;
       }
@@ -296,16 +331,16 @@ int parseArguments(int argc, char* argv[])
       }
       else
       {
-        fprintf(stderr, "no hostname specified\n");
+        app_printf(stderr, "no hostname specified\n");
         iReturn = EINVAL;
       }
     }
   }
 
-  DBGPRINTF(__FUNCTION__ "() - action   = %d\n", g_tState.eAction);
-  DBGPRINTF(__FUNCTION__ "() - host     = %s\n", g_tState.acHost);
-  DBGPRINTF(__FUNCTION__ "() - count    = %u\n", g_tState.uiCount);
-  DBGPRINTF(__FUNCTION__ "() - interval = %u\n", g_tState.uiInterval);
+  DBGPRINTF("parseargs() - action   = %d\n", g_tState.eAction);
+  DBGPRINTF("parseargs() - host     = %s\n", g_tState.acHost);
+  DBGPRINTF("parseargs() - count    = %u\n", g_tState.uiCount);
+  DBGPRINTF("parseargs() - interval = %u\n", g_tState.uiInterval);
 
   return iReturn;
 }
@@ -320,17 +355,17 @@ int showHelp(void)
   strncpy(acAppName, VER_INTERNALNAME_STR, sizeof(acAppName));
   strupr(acAppName);
 
-  printf("%s\n\n", VER_FILEDESCRIPTION_STR);
+  app_printf(stdout, "%s\n\n", VER_FILEDESCRIPTION_STR);
 
-  printf("%s host [-c x][-i x][-q][-h][-v][-V]\n\n", acAppName);
-  //      0.........1.........2.........3.
-  printf(" host        host to ping\n");
-  printf(" -c[ount]    stop after x pings\n");
-  printf(" -i[nterval] delay betw. pings\n");
-  printf(" -q[uiet]    no screen output\n");
-  printf(" -h[elp]     print this help\n");
-  printf(" -v[ersion]  print version info\n");
-  printf(" -V[ersion]  print ESP version\n");
+  app_printf(stdout, "%s host [-c x][-i x][-q][-h][-v][-V]\n\n", acAppName);
+  //                  0.........1.........2.........3.
+  app_printf(stdout, " host        host to ping\n");
+  app_printf(stdout, " -c[ount]    stop after x pings\n");
+  app_printf(stdout, " -i[nterval] delay betw. pings\n");
+  app_printf(stdout, " -q[uiet]    no screen output\n");
+  app_printf(stdout, " -h[elp]     print this help\n");
+  app_printf(stdout, " -v[ersion]  print version info\n");
+  app_printf(stdout, " -V[ersion]  print ext. version\n");
 
   return EOK;
 }
@@ -347,7 +382,7 @@ int showInfo(void)
   strncpy(acBuffer, VER_INTERNALNAME_STR, sizeof(acBuffer));
   strupr(acBuffer);
 
-  printf("%s " VER_LEGALCOPYRIGHT_STR "\n", acBuffer);
+  app_printf(stdout, "%s " VER_LEGALCOPYRIGHT_STR "\n", acBuffer);
 
   if (ESX_DOSVERSION_NEXTOS_48K != (uiVersion = esx_m_dosversion()))
   {
@@ -360,62 +395,52 @@ int showInfo(void)
     strncpy(acBuffer, "48K mode", sizeof(acBuffer));
   }
 
-  //      0.........1.........2.........3.
-  printf(" Version %s (%s)\n", VER_FILEVERSION_STR, acBuffer);
-  printf(" Stefan Zell (info@diezells.de)\n");
+  //                  0.........1.........2.........3.
+  app_printf(stdout, " Version %s (%s)\n", VER_FILEVERSION_STR, acBuffer);
+  app_printf(stdout, " Stefan Zell (info@diezells.de)\n");
 
   return EOK;
 }
 
 
 /*----------------------------------------------------------------------------*/
-/* showInfoEsp()                                                              */
+/* showInfoEx()                                                               */
 /*----------------------------------------------------------------------------*/
-int showInfoEsp(void)
+int showInfoEx(void)
 {
-  printf("ESP8266 version\n");
+  char_t acBuffer[0x10];
 
-  snprintf(g_tState.esp.acTxBuffer, sizeof(g_tState.esp.acTxBuffer), sCMD_AT_GMR "\r\n");
+  strncpy(acBuffer, VER_INTERNALNAME_STR, sizeof(acBuffer));
+  strupr(acBuffer);
 
-  if (EOK == esp_transmit(&g_tState.tEsp, g_tState.esp.acTxBuffer))
+  app_printf(stdout, "%s: Espressif ESP8266\n", acBuffer);
+
+  /* Read version information */
+  if (EOK == esp_transmit(&g_tState.tEsp, sCMD_AT_GMR "\r\n"))
   {
-    DBGPRINTF(">>> %s", g_tState.esp.acTxBuffer);
-
-    for ( ; ; )
+    while (ESP_LINE_DATA == esp_receive_line(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
     {
-      if (EOK == esp_receive(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
-      {
-        DBGPRINTF("<<< %s", g_tState.esp.acRxBuffer);
-
-        if (0 != strstr(g_tState.esp.acRxBuffer, "OK"))
-        {
-          break;
-        }
-        else if (0 != strstr(g_tState.esp.acRxBuffer, "ERROR"))
-        {
-          break;
-        }
-        else if (0 != strstr(g_tState.esp.acRxBuffer, "FAIL"))
-        {
-          break;
-        }
-        else
-        {
-          if (zxn_rtrim(g_tState.esp.acRxBuffer))
-          {
-            printf("  %s\n", g_tState.esp.acRxBuffer);
-          }
-        }
-      }
-      else
-      {
-        break;
-      }
+      zxn_rtrim(g_tState.esp.acRxBuffer);
+      app_printf(stdout, " %s\n", g_tState.esp.acRxBuffer);
     }
   }
-  else if (!g_tState.bQuiet)
+  else
   {
-    fprintf(stderr, "unable to send command to ESP8255\n");
+    app_printf(stderr, "unable to send " sCMD_AT_GMR " to ESP8266\n");
+  }
+
+  /* Read local IP addresses */
+  if (EOK == esp_transmit(&g_tState.tEsp, sCMD_AT_CIPSTA_CUR "?" "\r\n"))
+  {
+    while (ESP_LINE_DATA == esp_receive_line(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
+    {
+      zxn_rtrim(g_tState.esp.acRxBuffer);
+      app_printf(stdout, " %s\n", g_tState.esp.acRxBuffer);
+    }
+  }
+  else
+  {
+    app_printf(stderr, "unable to send " sCMD_AT_CIPSTA_CUR " to ESP8266\n");
   }
 
   return EOK;
@@ -433,10 +458,7 @@ int ping(void)
   /* Create PING command */
   snprintf(g_tState.esp.acTxBuffer, sizeof(g_tState.esp.acTxBuffer), sCMD_AT_PING "=\"%s\"\r\n", g_tState.acHost);
 
-  if (!g_tState.bQuiet)
-  {
-    printf("Pinging %s ...\n", g_tState.acHost);
-  }
+  app_printf(stdout, "pinging %s ...\n", g_tState.acHost);
 
   g_tState.stats.uiTotal = 0;
   g_tState.stats.uiTime  = 0;
@@ -452,7 +474,6 @@ int ping(void)
     if (EOK == esp_transmit(&g_tState.tEsp, g_tState.esp.acTxBuffer))
     {
       ++g_tState.stats.uiPings;
-      DBGPRINTF(">>> %s", g_tState.esp.acTxBuffer);
     }
     else
     {
@@ -463,74 +484,71 @@ int ping(void)
     /* Read response from ESP8266 */
     for ( ; ; )
     {
-      if (EOK == (uiResult = esp_receive(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer))))
+      uiResult = esp_receive_line(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer));  
+
+      if (ESP_LINE_DATA == uiResult)
       {
-        DBGPRINTF("<<< %s", g_tState.esp.acRxBuffer);
+        sscanf(g_tState.esp.acRxBuffer, "+%u", &g_tState.stats.uiTime);
+      }
+      else if (ESP_LINE_OK == uiResult)
+      {
+        ++g_tState.stats.uiPongs;
 
-        if (0 != strstr(g_tState.esp.acRxBuffer, "OK"))
+        g_tState.stats.uiTotal += g_tState.stats.uiTime;
+
+        if (g_tState.stats.uiTime < g_tState.stats.uiMin)
         {
-          ++g_tState.stats.uiPongs;
-
-          g_tState.stats.uiTotal += g_tState.stats.uiTime;
-
-          if (g_tState.stats.uiTime < g_tState.stats.uiMin)
-          {
-            g_tState.stats.uiMin = g_tState.stats.uiTime;
-          }
-
-          if (g_tState.stats.uiTime > g_tState.stats.uiMax)
-          {
-            g_tState.stats.uiMax = g_tState.stats.uiTime;
-          }
-
-          if (!g_tState.bQuiet)
-          {
-            printf("response from %s: time=%u ms\n", g_tState.acHost, g_tState.stats.uiTime);
-          }
-          break;
+          g_tState.stats.uiMin = g_tState.stats.uiTime;
         }
-        else if (0 != strstr(g_tState.esp.acRxBuffer, "ERROR")) /* unknown host */
+
+        if (g_tState.stats.uiTime > g_tState.stats.uiMax)
         {
-          if (!g_tState.bQuiet)
-          {
-            fprintf(stderr, "unknown host \"%s\"\n", g_tState.acHost);
-          }
+          g_tState.stats.uiMax = g_tState.stats.uiTime;
+        }
 
-          iReturn = ERANGE;
-          goto EXIT_PING;
-        }
-        else if (0 != strstr(g_tState.esp.acRxBuffer, "FAIL")) /* TIMEOUT */
-        {
-          if (!g_tState.bQuiet)
-          {
-            printf("timeout\n", g_tState.acHost, g_tState.stats.uiTime);
-          }
-
-          break;
-        }
-        else if (0 != strstr(g_tState.esp.acRxBuffer, "+"))
-        {
-          sscanf(g_tState.esp.acRxBuffer, "+%u", &g_tState.stats.uiTime);
-        }
+        app_printf(stdout, "response from %s: time=%u ms\n", g_tState.acHost, g_tState.stats.uiTime);
+        break;
+      }
+      else if (ESP_LINE_ERROR == uiResult)
+      {
+        app_printf(stderr, "unknown host \"%s\"\n", g_tState.acHost);
+        iReturn = ERANGE;
+        goto EXIT_PING;
+      }
+      else if (ESP_LINE_FAIL == uiResult)
+      {
+        app_printf(stdout, "timeout\n");
+        break;
       }
       else
       {
+        app_printf(stderr, "communication error\n");
         iReturn = ENOTSUP;
-        bFinished = true;
+        goto EXIT_PING;
       }
     }
 
-    /* Interval */
-    if (0 != g_tState.uiInterval)
-    {
-      zxn_sleep_ms(g_tState.uiInterval);
-    }
-
     /* User break ? */
+#if 1
+    if (0 != (g_tState.iKey = in_inkey()))
+    {
+      switch (g_tState.iKey)
+      {
+        case ' ':
+        case 'c':
+        case 'C':
+        case 'q':
+        case 'Q':
+          bFinished = true;
+          break;
+      }
+    }
+#else
     if (in_key_pressed(IN_KEY_SCANCODE_SPACE | 0x8000)) /* CAPS + SPACE */
     {
       bFinished = true;
     } 
+#endif
 
     /* Count reached ? */
     if (0 != g_tState.uiCount)
@@ -540,22 +558,38 @@ int ping(void)
         bFinished = true;
       }
     }
+
+    /* Interval */
+    if ((0 != g_tState.uiInterval) && !bFinished)
+    {
+      zxn_sleep_ms(g_tState.uiInterval);
+    }
   }
   while (!bFinished);
 
   /* Create statistics */
-  if (!g_tState.bQuiet)
+  app_printf(stdout, "\n--- %s statistics ---\n", g_tState.acHost);
+  app_printf(stdout, "%u transmitted, %u received, time %u ms\n",
+                      g_tState.stats.uiPings,
+                      g_tState.stats.uiPongs,
+                      ((uint16_t) g_tState.stats.uiTotal));
+  app_printf(stdout, "rtt min/avg/max = %u/%u/%u [ms]\n",
+                      (UINT16_MAX != g_tState.stats.uiMin ? g_tState.stats.uiMin : 0),
+                      ((uint16_t) (g_tState.stats.uiTotal / g_tState.stats.uiPongs)),
+                      g_tState.stats.uiMax);
+
+#if 1
+  /* Wait until break-key is released */
+  while (0 != (g_tState.iKey = in_inkey()))
   {
-    printf("\n--- %s ping statistics ---\n", g_tState.acHost);
-    printf("%u transmitted, %u received, time %u ms\n",
-           g_tState.stats.uiPings,
-           g_tState.stats.uiPongs,
-           ((uint16_t) g_tState.stats.uiTotal));
-    printf("rtt min/avg/max = %u/%u/%u [ms]\n",
-           (UINT16_MAX != g_tState.stats.uiMin ? g_tState.stats.uiMin : 0),
-           ((uint16_t) (g_tState.stats.uiTotal / g_tState.stats.uiPongs)),
-           g_tState.stats.uiMax);
+    intrinsic_nop();
   }
+#else
+  while (in_key_pressed(IN_KEY_SCANCODE_SPACE | 0x8000)) /* CAPS + SPACE */
+  {
+    intrinsic_nop();
+  }
+#endif
 
 EXIT_PING:
 

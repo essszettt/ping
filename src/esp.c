@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------+
 |                                                                              |
 | filename: esp.c                                                              |
-| project:  ZX Spectrum Next - PING                                            |
+| project:  ZX Spectrum Next - libesp                                          |
 | author:   Stefan Zell                                                        |
 | date:     12/14/2025                                                         |
 |                                                                              |
@@ -92,6 +92,7 @@ uint8_t esp_open(esp_t* pState)
 
     uart_open(&pState->tUart, 0x00);
     uart_set_baudrate(&pState->tUart, 115200);
+    uart_set_timeout(&pState->tUart, 2000);
     uart_flush(&pState->tUart);
 
     pState->uiState = ESP_OPEN;
@@ -123,6 +124,8 @@ uint8_t esp_close(esp_t* pState)
 /*----------------------------------------------------------------------------*/
 uint8_t esp_transmit(esp_t* pState, char_t* acBuffer)
 {
+  DBGPRINTF(">>> %s", acBuffer);
+
   if ((0 != pState) && (ESP_OPEN == pState->uiState))
   {
     if (acBuffer)
@@ -131,7 +134,7 @@ uint8_t esp_transmit(esp_t* pState, char_t* acBuffer)
       {
         if (EOK != uart_tx_byte(&pState->tUart, *acBuffer++))
         {
-          return EBREAK;
+          return ETIMEOUT;
         }
       }
 
@@ -162,7 +165,7 @@ uint8_t esp_receive(esp_t* pState, char_t* acBuffer, uint16_t uiSize)
     {
       if (EOK != uart_rx_byte(&pState->tUart, &pState->uiCurr))
       {
-        uiReturn = EBREAK;
+        uiReturn = ETIMEOUT;
         break;
       }
 
@@ -179,6 +182,7 @@ uint8_t esp_receive(esp_t* pState, char_t* acBuffer, uint16_t uiSize)
 
       if (('\r' == pState->uiPrev) && ('\n' == pState->uiCurr))
       {
+        DBGPRINTF("<<< %s", acBuffer);
         uiReturn = EOK;
         break;
       }
@@ -188,6 +192,35 @@ uint8_t esp_receive(esp_t* pState, char_t* acBuffer, uint16_t uiSize)
   }
   
   return uiReturn;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* esp_receive_line()                                                         */
+/*----------------------------------------------------------------------------*/
+uint8_t esp_receive_line(esp_t* pState, char_t* acBuffer, uint16_t uiSize)
+{
+  if (EOK == esp_receive(pState, acBuffer, uiSize))
+  {
+    if (0 == strcmp(acBuffer, sESP_RESP_OK "\r\n"))
+    {
+      return ESP_LINE_OK;
+    }
+    else if (0 == strcmp(acBuffer, sESP_RESP_ERROR "\r\n"))
+    {
+      return ESP_LINE_ERROR;
+    }
+    else if (0 == strcmp(acBuffer, sESP_RESP_FAIL "\r\n"))
+    {
+      return ESP_LINE_FAIL;
+    }
+    else
+    {
+      return ESP_LINE_DATA;
+    }
+  }
+
+  return ESP_LINE_FATAL;
 }
 
 

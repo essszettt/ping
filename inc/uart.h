@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------+
 |                                                                              |
 | filename: uart.h                                                             |
-| project:  ZX Spectrum Next - PING                                            |
+| project:  ZX Spectrum Next - libuart                                         |
 | author:   Stefan Zell                                                        |
 | date:     12/14/2025                                                         |
 |                                                                              |
@@ -107,6 +107,16 @@ typedef struct _uart
   uint32_t uiBaudrate;
 
   /*!
+  Init-value of the timeout counter
+  */
+  uint32_t uiTimeout;
+
+  /*!
+  Current value of the timeout counter
+  */
+  uint32_t uiTimeout_;
+
+  /*!
   Counter for block transfers
   */
   uint16_t uiIdx;
@@ -145,10 +155,18 @@ uint8_t uart_flush(uart_t* pState);
 /*!
 Set the current baudrate of the UART connection
 @param pState Pointer to device structure
-@param uiDaudrate Baudrate to set (default: 115200 bit/s)
+@param uiBaudrate Baudrate to set (default: 115200 bit/s)
 @return EOK = no error
 */
 uint8_t uart_set_baudrate(uart_t* pState, uint32_t uiBaudrate);
+
+/*!
+Set the current timeout of the UART connection (in [ms])
+@param pState Pointer to device structure
+@param uiTimeout Timeout to set (default: 2000 ms)
+@return EOK = no error
+*/
+uint8_t uart_set_timeout(uart_t* pState, uint32_t uiTimeout);
 
 /*!
 Send one byte to UART
@@ -174,10 +192,6 @@ Send block of data to UART
 @return EOK = no error
 */
 uint8_t uart_tx(uart_t* pState, uint8_t* uiData, uint16_t uiLen);
-
-/*!
-*/
-uint8_t uart_cancel(void);
 
 /*============================================================================*/
 /*                               Klassen                                      */

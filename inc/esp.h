@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------+
 |                                                                              |
 | filename: esp.h                                                              |
-| project:  ZX Spectrum Next - PING                                            |
+| project:  ZX Spectrum Next - libesp                                          |
 | author:   Stefan Zell                                                        |
 | date:     12/14/2025                                                         |
 |                                                                              |
@@ -43,6 +43,20 @@
 /*============================================================================*/
 /*                               Defines                                      */
 /*============================================================================*/
+/*!
+ESP response "OK"
+*/
+#define sESP_RESP_OK "OK"
+
+/*!
+ESP response "ERROR"
+*/
+#define sESP_RESP_ERROR "ERROR"
+
+/*!
+ESP response "FAIL"
+*/
+#define sESP_RESP_FAIL "FAIL"
 
 /*============================================================================*/
 /*                               Namespaces                                   */
@@ -87,6 +101,34 @@ typedef struct _esp
 
 } esp_t;
 
+enum
+{
+  /*!
+  Data line received; further lines available
+  */
+  ESP_LINE_DATA  = 0,
+
+  /*!
+  "OK" received; last line
+  */
+  ESP_LINE_OK    = 1,
+
+  /*!
+  "ERROR" received; last line
+  */
+  ESP_LINE_ERROR = 2,
+
+  /*!
+  "FAIL" received; last line
+  */
+  ESP_LINE_FAIL  = 3,
+
+  /*!
+  Low level error accessing ESP8266
+  */
+  ESP_LINE_FATAL = 4
+};
+
 /*============================================================================*/
 /*                               Prototypen                                   */
 /*============================================================================*/
@@ -106,6 +148,7 @@ uint8_t esp_close(esp_t* pState);
 
 /*!
 Sending a AT-command to ESP8266. The command must be terminated with CR+LF.
+@param pState Pointer to device structure
 @param acBuffer Pointer to a buffer containing the data to send (incl. CR+LF)
 @return EOK = no error; EBREAK = user break
 */
@@ -113,11 +156,22 @@ uint8_t esp_transmit(esp_t* pState, char_t* acBuffer);
 
 /*!
 Reading one line in textmode from ESP8266.
+@param pState Pointer to device structure
 @param acBuffer Pointer to a buffer to copy the line to
 @param uiSize Size of the buffer [byte]
 @return EOK = no error; EBREAK = user break
 */
 uint8_t esp_receive(esp_t* pState, char_t* acBuffer, uint16_t uiSize);
+
+/*!
+Receive one line from ESP8266.
+@param pState Pointer to device structure
+@param acBuffer Pointer to a buffer to copy the line to
+@param uiSize Size of the buffer [byte]
+@return "ESP_LINE_DATA" if valid line of data received; "ESP_LINE_OK" if end of
+                        transmission successfully reched
+*/
+uint8_t esp_receive_line(esp_t* pState, char_t* acBuffer, uint16_t uiSize);
 
 /*============================================================================*/
 /*                               Klassen                                      */

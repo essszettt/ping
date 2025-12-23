@@ -65,6 +65,16 @@ ESP command to read version information
 #define sCMD_AT_GMR "AT+GMR"
 
 /*!
+ESP command to read local IP address
+*/
+#define sCMD_AT_CIFSR "AT+CIFSR"
+
+/*!
+ESP command to set/get local IP addresses
+*/
+#define sCMD_AT_CIPSTA_CUR "AT+CIPSTA_CUR"
+
+/*!
 Default value for number of ping
 */
 #define uiDEFAULT_COUNT (5)
@@ -101,7 +111,7 @@ typedef enum _action
   ACTION_NONE = 0,
   ACTION_HELP,
   ACTION_INFO,
-  ACTION_ESPINFO,
+  ACTION_INFOEX,
   ACTION_PING
 } action_t;
 
@@ -146,6 +156,11 @@ typedef struct _appstate
   uint8_t uiCpuSpeed;
 
   /*!
+  Buffer to read keyboard
+  */
+  int iKey;
+
+  /*!
   Statistical information
   */
   struct
@@ -182,6 +197,7 @@ typedef struct _appstate
   } stats;
 
   /*!
+  Device data of the ESP connection
   */
   esp_t tEsp;
 
