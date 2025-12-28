@@ -110,7 +110,7 @@ const errentry_t g_tErrTable[] =
   {ENOTSUP,     "not supporte"              "\xE4"}, /* 'd' | 0x80 */
   {EOVERFLOW,   "overflo"                   "\xEF"}, /* 'w' | 0x80 */
   {ERANGE,      "out of rang"               "\xE5"}, /* 'e' | 0x80 */
-  {ESTAT,       "bad stat"                  "\xF4"}, /* 't' | 0x80 */
+  {ESTAT,       "bad stat"                  "\xE5"}, /* 'e' | 0x80 */
   {EAGAIN,      "resource temp. unavailabl" "\xE5"}, /* 'e' | 0x80 */
   {EWOULDBLOCK, "operation would bloc"      "\xEB"}, /* 'k' | 0x80 */
   /* ---------------- APPLICATION SPECIFIC ----------------------- */

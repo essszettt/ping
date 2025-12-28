@@ -35,11 +35,11 @@ SRCS += $(wildcard $(LIB_DIR)/libzxn/src/*.c \
 ### Compiler Flags #####################
 CFLAGS = -compiler=sdcc --vc -clib=sdcc_iy -SO3 --opt-code-size -I$(INC_DIR) -I$(LIB_DIR)/libzxn/inc -pragma-include:$(INC_DIR)/zpragma.inc
 
-# Select CRT
+# select CRT
 CFLAGS += -startup=30
 
 # tradeoff speed vs. code quality
-# CFLAGS += --max-allocs-per-node200000
+CFLAGS += --max-allocs-per-node200000
 
 # verbose output
 # CFLAGS += -v
@@ -67,11 +67,11 @@ LDFLAGS += -s
 endif
 
 ### Compiler Command ###################
-CC = zcc +$(TARGET) $(CFLAGS) $(SRCS) $(LDFLAGS)
+CC = zcc
 
 ### Build Target #######################
 all:
-	$(CC)
+	$(CC) +$(TARGET) $(CFLAGS) $(SRCS) $(LDFLAGS)
 ifeq ($(APPTYPE), dotn)
 ifeq ($(OS),Windows_NT)
 #	@$(RM) $(BUILD_DIR)/$(APPNAME)
