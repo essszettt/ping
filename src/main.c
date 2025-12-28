@@ -103,7 +103,7 @@ Application local "printf" that handels option "-q" ("quiet") and is able to
 print to stdout/stderr.
 @param pStream Stream to print to ("stdout", "stderr")
 @param acFmt Format string (see "printf")
-@return Errorcode (see "printf")
+@return Errorcode (see "printf"); negative values signaling errors
 */
 int app_printf(FILE* pStream, char_t* acFmt, ...);
 
@@ -219,20 +219,24 @@ int main(int argc, char* argv[])
 /*----------------------------------------------------------------------------*/
 int app_printf(FILE* pStream, char_t* acFmt, ...)
 {
-  int iReturn = EINVAL;
-
-  va_list args;
-  va_start(args, acFmt);
+  int iReturn = EOK;
 
   if (pStream && acFmt) 
   {
     if (!g_tState.bQuiet)
     {
+      va_list args;
+      va_start(args, acFmt);
+
       iReturn = vfprintf(pStream, acFmt, args);
+
+      va_end(args);
     }
   }
-
-  va_end(args);
+  else
+  {
+    iReturn = -EINVAL;
+  }
 
   return iReturn;
 }
