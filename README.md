@@ -26,3 +26,4 @@ It is important, that the baudrate of the ESP8266 is set to "115200 bit/s" (defa
 
 - 0.0.4  First public release to test
 - 0.0.7  Added timeout detection; fixed user break
+- 0.0.8  Fixed some internal errors; improved optimization
