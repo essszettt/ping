@@ -83,20 +83,22 @@ char_t* zxn_ltrim(char_t* acString)
 {
   if (acString)
   {
-    char_t* pEnd = acString + strlen(acString);
+    const char_t* pEnd = acString + strlen(acString);
+    char_t* pBegin = acString;
 
-    while (pEnd > acString)
+    while (pBegin < pEnd)
     {
-      if (' ' >= *pEnd)
-      {
-        *pEnd = '\0';
-      }
-      else
+      if (' ' < *pBegin)
       {
         break;
       }
 
-      --pEnd;
+      ++pBegin;
+    }
+
+    if (pBegin != acString)
+    {
+      memmove(acString, pBegin, (size_t) (pEnd - pBegin) + 1);
     }
 
     return acString;
