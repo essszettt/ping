@@ -12,6 +12,8 @@ This application uses the command "AT+PING" from ESP8266 to execute pings to hos
 
 It is important, that the baudrate of the ESP8266 is set to "115200 bit/s" (default).
 
+By default five PINGs are sent per host. The number of PINGs can be specified by commandline option "c". If the number of PINGs is set to "0" then PINGs are sent in an andless loop. This loop can be interrupted by pressing "C", "Q", "BREAK" or "CAPS+SPACE" ...
+
 ![ping.bmp](https://github.com/essszettt/ping/blob/main/doc/ping.bmp)
 
 ---
