@@ -1,0 +1,12 @@
+lib/libzxn/build/zxn_sleep_ms.o
+lib/libzxn/build/zxn_rtrim.o
+lib/libzxn/build/zxn_radastan_mode.o
+lib/libzxn/build/zxn_pixelad.o
+lib/libzxn/build/zxn_normalizepath.o
+lib/libzxn/build/zxn_msb.o
+lib/libzxn/build/zxn_ltrim.o
+lib/libzxn/build/zxn_gotoxy.o
+lib/libzxn/build/zxn_border.o
+lib/libzxn/build/libzxn.o
+lib/libzxn/build/libzxn.lib
+build/ping
