@@ -29,3 +29,4 @@ By default five PINGs are sent per host. The number of PINGs can be specified by
 - 0.0.4  First public release to test
 - 0.0.7  Added timeout detection; fixed user break
 - 0.0.8  Fixed some internal errors; improved optimization
+- 0.0.9  Implemented "libzxn" as static library
