@@ -87,6 +87,8 @@ char_t* zxn_rtrim(char_t* acString)
 
     while (pEnd > acString)
     {
+      --pEnd;
+
       if (' ' >= *pEnd)
       {
         *pEnd = '\0';
@@ -95,8 +97,6 @@ char_t* zxn_rtrim(char_t* acString)
       {
         break;
       }
-
-      --pEnd;
     }
 
     return acString;
