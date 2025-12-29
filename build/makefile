@@ -88,6 +88,4 @@ clean:
 	@$(RM) $(wildcard $(BLD_DIR)/*.sym)
 	@$(RM) $(wildcard $(SRC_DIR)/*.lis)
 	@$(RM) $(wildcard $(SRC_DIR)/*.sym)
-	@$(RM) $(wildcard $(LIB_DIR)/libzxn/src/*.lis)
-	@$(RM) $(wildcard $(LIB_DIR)/libzxn/src/*.sym) 
 	@$(MAKE) -C $(LIB_DIR)/libzxn/build clean
