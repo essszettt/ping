@@ -210,7 +210,7 @@ uint8_t uart_set_timeout(uart_t* pState, uint32_t uiTimeout)
   if (pState && (UART_OPEN == pState->uiState))
   {
     pState->uiTimeout   = (uiTimeout ? uiTimeout : uiUART_DEFAULT_TIMEOUT);
-    pState->uiTimeout  *= 1000;
+    pState->uiTimeout  *= 10;
     pState->uiTimeout <<= zxn_getspeed();
 
     return EOK;

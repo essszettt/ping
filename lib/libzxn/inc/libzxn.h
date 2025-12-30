@@ -48,6 +48,16 @@
 /*                               Defines                                      */
 /*============================================================================*/
 /*!
+Version information of the library
+*/
+#define ZXN_VERSION_MAJOR       0
+#define ZXN_VERSION_MINOR       0
+#define ZXN_VERSION_PATCH       2
+#define ZXN_PRODUCTNAME_STR     "libzxn"
+#define ZXN_COMPANYNAME_STR     "STZ Engineering"
+#define ZXN_LEGALCOPYRIGHT_STR  "\x7F 2025 " VER_COMPANYNAME_STR
+
+/*!
 Beginning of project specific error codes.
 */
 #define ERROR_SPECIFIC (0x0200)
@@ -110,6 +120,19 @@ Number of the ZXN-register "Layer 1,0 (LoRes) Control" (not defined in <zxn.h>).
 */
 #define REG_L10_CONTROL (0x6A)
 
+/*!
+Stringizing-macros to create version number as string
+*/
+#define ZXN_VER_STR_(s) #s
+#define ZXN_VER_STR(s) ZXN_VER_STR_(s)
+
+/*!
+This macro delivers the version number of the library as a string literal
+*/
+#define ZXN_VERSION_STR ZXN_VER_STR(ZXN_VERSION_MAJOR) "." \
+                        ZXN_VER_STR(ZXN_VERSION_MINOR) "." \
+                        ZXN_VER_STR(ZXN_VERSION_PATCH)
+
 /*============================================================================*/
 /*                               Namespaces                                   */
 /*============================================================================*/
@@ -134,9 +157,36 @@ Type definition in short form for a "unsigned char".
 */
 typedef unsigned char char_t;
 
+/*!
+Type of a version number of a software component
+*/
+typedef struct _version
+{
+  /*!
+  major version number
+  */
+  uint8_t uiMajor;
+
+  /*!
+  minor version number
+  */
+  uint8_t uiMinor;
+
+  /*!
+  patchlevel version number
+  */
+  uint8_t uiPatch;
+} version_t;
+
 /*============================================================================*/
 /*                               Prototypen                                   */
 /*============================================================================*/
+/*!
+With this function the version information of the library can be read.
+@return version information of the library
+*/
+version_t zxn_version(void);
+
 /*!
 This function calculates the address of the byte in video-memory of a pixel at
 given position on the screen.
@@ -144,7 +194,7 @@ given position on the screen.
 @param y  y-coordinate (0 - 192)
 @return Pointer to the byte in video-memory
 */
-extern uint8_t* zxn_pixelad_callee(uint8_t x, uint8_t y) __z88dk_callee;
+uint8_t* zxn_pixelad_callee(uint8_t x, uint8_t y) __z88dk_callee;
 #define zxn_pixelad(x, y) zxn_pixelad_callee(x, y)
 
 /*!
@@ -154,6 +204,12 @@ This function sets the colour of the border by a call of the ROM-function
 */
 void zxn_border_fastcall(uint8_t uiColour) __z88dk_fastcall;
 #define zxn_border(x) zxn_border_fastcall(x)
+
+/*!
+This function restarts the system.
+*/
+void zxn_reboot_fastcall(void) __z88dk_fastcall;
+#define zxn_reboot(x) zxn_reboot_fastcall(x)
 
 /*!
 This function detects, if Radastan mode is active or not

@@ -7,6 +7,8 @@ lib/libzxn/build/zxn_msb.o
 lib/libzxn/build/zxn_ltrim.o
 lib/libzxn/build/zxn_gotoxy.o
 lib/libzxn/build/zxn_border.o
+lib/libzxn/build/zxn_reboot.o
+lib/libzxn/build/zxn_version.o
 lib/libzxn/build/libzxn.o
 lib/libzxn/build/libzxn.lib
 build/ping

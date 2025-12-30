@@ -462,7 +462,12 @@ int ping(void)
   /* Create PING command */
   snprintf(g_tState.esp.acTxBuffer, sizeof(g_tState.esp.acTxBuffer), sCMD_AT_PING "=\"%s\"\r\n", g_tState.acHost);
 
-  app_printf(stdout, "pinging %s ...\n", g_tState.acHost);
+#if 0
+  putchar(0x04);
+  putchar(0x00);
+#endif
+
+  app_printf(stdout, "pinging %s ..\n", g_tState.acHost);
 
   g_tState.stats.uiTotal = 0;
   g_tState.stats.uiTime  = 0;
@@ -533,7 +538,6 @@ int ping(void)
     }
 
     /* User break ? */
-#if 1
     if (0 != (g_tState.iKey = in_inkey()))
     {
       switch (g_tState.iKey)
@@ -547,12 +551,13 @@ int ping(void)
           break;
       }
     }
-#else
+
+   #if 0
     if (in_key_pressed(IN_KEY_SCANCODE_SPACE | 0x8000)) /* CAPS + SPACE */
     {
       bFinished = true;
     } 
-#endif
+   #endif
 
     /* Count reached ? */
     if (0 != g_tState.uiCount)
@@ -582,20 +587,18 @@ int ping(void)
                       ((uint16_t) (g_tState.stats.uiTotal / g_tState.stats.uiPongs)),
                       g_tState.stats.uiMax);
 
-#if 1
   /* Wait until break-key is released */
   while (0 != (g_tState.iKey = in_inkey()))
   {
     intrinsic_nop();
   }
-#else
-  while (in_key_pressed(IN_KEY_SCANCODE_SPACE | 0x8000)) /* CAPS + SPACE */
-  {
-    intrinsic_nop();
-  }
-#endif
 
 EXIT_PING:
+
+#if 0
+  putchar(0x04);
+  putchar(0x01);
+#endif
 
   return (EOK != iReturn ? iReturn : (0 != g_tState.stats.uiPongs ? EOK : ETIMEOUT));
 }
