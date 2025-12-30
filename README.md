@@ -26,7 +26,8 @@ By default five PINGs are sent per host. The number of PINGs can be specified by
 
 ### HISTORY
 
-- 0.0.4  First public release to test
-- 0.0.7  Added timeout detection; fixed user break
-- 0.0.8  Fixed some internal errors; improved optimization
-- 0.0.9  Implemented "libzxn" as static library
+- 0.0.4   First public release to test
+- 0.0.7   Added timeout detection; fixed user break
+- 0.0.8   Fixed some internal errors; improved optimization
+- 0.0.9   Implemented "libzxn" as static library
+- 0.0.10  Fixed timeouts in UART communication (tested on MAME without ESP8255)
