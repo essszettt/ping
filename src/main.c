@@ -50,8 +50,8 @@
 #include <input/input_zx.h>
 
 #include "libzxn.h"
-#include "uart.h"
-#include "esp.h"
+#include "libuart.h"
+#include "libesp.h"
 #include "ping.h"
 #include "version.h"
 
@@ -419,10 +419,13 @@ int showInfoEx(void)
 
   app_printf(stdout, "%s: Espressif ESP8266\n", acBuffer);
 
+  /* Initialize UART/ESP */
+  esp_flush(&g_tState.tEsp);
+
   /* Read version information */
   if (EOK == esp_transmit(&g_tState.tEsp, sCMD_AT_GMR "\r\n"))
   {
-    while (ESP_LINE_DATA == esp_receive_line(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
+    while (ESP_LINE_DATA == esp_receive_ex(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
     {
       zxn_rtrim(g_tState.esp.acRxBuffer);
       app_printf(stdout, " %s\n", g_tState.esp.acRxBuffer);
@@ -436,7 +439,7 @@ int showInfoEx(void)
   /* Read local IP addresses */
   if (EOK == esp_transmit(&g_tState.tEsp, sCMD_AT_CIPSTA_CUR "?" "\r\n"))
   {
-    while (ESP_LINE_DATA == esp_receive_line(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
+    while (ESP_LINE_DATA == esp_receive_ex(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer)))
     {
       zxn_rtrim(g_tState.esp.acRxBuffer);
       app_printf(stdout, " %s\n", g_tState.esp.acRxBuffer);
@@ -458,6 +461,9 @@ int ping(void)
 {
   int iReturn = EOK;
   uint8_t uiResult;
+
+  /* Initialize UART/ESP */
+  esp_flush(&g_tState.tEsp);
 
   /* Create PING command */
   snprintf(g_tState.esp.acTxBuffer, sizeof(g_tState.esp.acTxBuffer), sCMD_AT_PING "=\"%s\"\r\n", g_tState.acHost);
@@ -493,7 +499,7 @@ int ping(void)
     /* Read response from ESP8266 */
     for ( ; ; )
     {
-      uiResult = esp_receive_line(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer));  
+      uiResult = esp_receive_ex(&g_tState.tEsp, g_tState.esp.acRxBuffer, sizeof(g_tState.esp.acRxBuffer));  
 
       if (ESP_LINE_DATA == uiResult)
       {
