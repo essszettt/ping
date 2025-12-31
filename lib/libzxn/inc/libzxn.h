@@ -52,7 +52,7 @@ Version information of the library
 */
 #define ZXN_VERSION_MAJOR       0
 #define ZXN_VERSION_MINOR       0
-#define ZXN_VERSION_PATCH       2
+#define ZXN_VERSION_PATCH       4
 #define ZXN_PRODUCTNAME_STR     "libzxn"
 #define ZXN_COMPANYNAME_STR     "STZ Engineering"
 #define ZXN_LEGALCOPYRIGHT_STR  "\x7F 2025 " VER_COMPANYNAME_STR
@@ -74,7 +74,7 @@ Error code: Timeout in operation
 
 #ifndef ERANGE
   /*!
-  (Re)definition of error "ERANGE". Maybe just a type in <errno.h> that needs to
+  (Re)definition of error "ERANGE". Maybe just a typo in <errno.h> that needs to
   be corrected ...
   */
   #define ERANGE __ERANGE
@@ -182,10 +182,18 @@ typedef struct _version
 /*                               Prototypen                                   */
 /*============================================================================*/
 /*!
-With this function the version information of the library can be read.
-@return version information of the library
+With this function returns the version information of the library.
+@return version information of the library (major, minor, patch)
 */
 version_t zxn_version(void);
+
+/*!
+This function returns a pointer to a textual error message for the given
+error code.
+@param iCode Error code to get it's textual representation
+@return Pointer to a human readable message
+*/
+const char_t* zxn_strerror(int iCode);
 
 /*!
 This function calculates the address of the byte in video-memory of a pixel at
@@ -198,18 +206,12 @@ uint8_t* zxn_pixelad_callee(uint8_t x, uint8_t y) __z88dk_callee;
 #define zxn_pixelad(x, y) zxn_pixelad_callee(x, y)
 
 /*!
-This function sets the colour of the border by a call of the ROM-function
-(in 48K-Spectrum-ROM)
-@param uiColour Colour of the border to set (0 .. 7)
+This function resets/restarts the system by writing to the Reset-NREG (0x02)
+of the Spectrum Next.
+@param uiMode Resetmode: 0x01 = software reset; 0x02 = hardware reset
 */
-void zxn_border_fastcall(uint8_t uiColour) __z88dk_fastcall;
-#define zxn_border(x) zxn_border_fastcall(x)
-
-/*!
-This function restarts the system.
-*/
-void zxn_reboot_fastcall(void) __z88dk_fastcall;
-#define zxn_reboot(x) zxn_reboot_fastcall(x)
+void zxn_reset_fastcall(uint8_t uiMode) __z88dk_fastcall;
+#define zxn_reset(x) zxn_reset_fastcall(x)
 
 /*!
 This function detects, if Radastan mode is active or not
@@ -217,14 +219,6 @@ This function detects, if Radastan mode is active or not
 @return "true" = Radastan mode active; "false" = Radastan mode not active
 */
 bool zxn_radastan_mode(void);
-
-/*!
-This function returns a pointer to a textual error message for the given
-error code.
-@param iCode Error code to get it's textual representation
-@return Pointer to a human readable message
-*/
-const char_t* zxn_strerror(int iCode);
 
 /*!
 This function is used to map a physical memory address to a void pointer.
@@ -256,12 +250,6 @@ inline void zxn_setspeed(uint8_t uiSpeed)
 }
 
 /*!
-Stops execution of current program for a specified duration
-@param uiDuration Time to sleep in [ms]
-*/
-void zxn_sleep_ms(uint16_t uiDuration) __z88dk_fastcall;
-
-/*!
 This function returns the current value of the frame counter system variable.
 @return Current value of system variable "FRAMES"
 */
@@ -271,11 +259,31 @@ inline uint32_t zxn_frames(void)
 }
 
 /*!
+Stops execution of current program for a specified duration
+@param uiDuration Time to sleep in [ms]
+*/
+void zxn_sleep_ms(uint16_t uiDuration) __z88dk_fastcall;
+
+/*!
 In this function cleans up the given path ('\\' => '/', remove trailing '/')
 @param acPath [IN/OUT] Path to clean up
 @return "0" = no error
 */
 int zxn_normalizepath(char_t* acPath);
+
+/*!
+This function sets the colour of the border by a call of the ROM-function
+(in 48K-Spectrum-ROM)
+@param uiColour Colour of the border to set (0 .. 7)
+*/
+void zxn_border_fastcall(uint8_t uiColour) __z88dk_fastcall;
+#define zxn_border(x) zxn_border_fastcall(x)
+
+/*!
+This function clears the screen
+@param uiColor Color of the background ("paper color")
+*/
+void zxn_cls(uint8_t uiColor) __z88dk_fastcall;
 
 /*!
 Print at specified position on screen (upper left corner = 0,0).
@@ -291,6 +299,22 @@ type "uint8_t"
 @return Index of the most signifikant bit
 */
 int8_t zxn_msb8(uint8_t uiValue);
+
+/*!
+This function detects the index of the most significant bit in an value of
+type "uint16_t"
+@param uiValue Value to compute index of most significant bit
+@return Index of the most signifikant bit
+*/
+int8_t zxn_msb16(uint16_t uiValue);
+
+/*!
+This function detects the index of the most significant bit in an value of
+type "uint32_t"
+@param uiValue Value to compute index of most significant bit
+@return Index of the most signifikant bit
+*/
+int8_t zxn_msb32(uint32_t uiValue);
 
 /*!
 Trim whitespace from right end of a string

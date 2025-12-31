@@ -1,19 +1,19 @@
 /*-----------------------------------------------------------------------------+
 |                                                                              |
-| filename: zxn_gotoxy.c                                                       |
-| project:  ZX Spectrum Next - libzxn                                          |
-| author:   S. Zell                                                            |
-| date:     12/20/2025                                                         |
+| filename: libesp.h                                                           |
+| project:  ZX Spectrum Next - libesp                                          |
+| author:   Stefan Zell                                                        |
+| date:     12/14/2025                                                         |
 |                                                                              |
 +------------------------------------------------------------------------------+
 |                                                                              |
 | description:                                                                 |
 |                                                                              |
-| Function to print at specified position on screen                            |
+| Driver for ESP8266 on ZX Spectrum Next                                       |
 |                                                                              |
 +------------------------------------------------------------------------------+
 |                                                                              |
-| Copyright (c) 12/20/2025 STZ Engineering                                     |
+| Copyright (c) 12/14/2025 STZ Engineering                                     |
 |                                                                              |
 | This software is provided  "as is",  without warranty of any kind, express   |
 | or implied. In no event shall STZ or its contributors be held liable for any |
@@ -33,17 +33,40 @@
 |                                                                          ;-) |
 +-----------------------------------------------------------------------------*/
 
+#if !defined(__LIBESP_H__)
+  #define __LIBESP_H__
+
 /*============================================================================*/
 /*                               Includes                                     */
 /*============================================================================*/
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "libzxn.h"
 
 /*============================================================================*/
 /*                               Defines                                      */
 /*============================================================================*/
+/*!
+ESP response "OK"
+*/
+#define sESP_RESP_OK "OK"
+
+/*!
+ESP response "ERROR"
+*/
+#define sESP_RESP_ERROR "ERROR"
+
+/*!
+ESP response "FAIL"
+*/
+#define sESP_RESP_FAIL "FAIL"
+
+/*!
+Default-baudrate for communication with ESP8266: 115200 bit/s
+*/
+#define uiESP_DEFAULT_BAUDRATE (115200)
+
+/*!
+Default-timeout for communication with ESP8266: 2000 ms
+*/
+#define uiESP_DEFAULT_TIMEOUT (2000)
 
 /*============================================================================*/
 /*                               Namespaces                                   */
@@ -64,10 +87,150 @@
 /*============================================================================*/
 /*                               Typ-Definitionen                             */
 /*============================================================================*/
+/*!
+This enumeration describes all states of a ESP session
+*/
+enum
+{
+  ESP_CLOSED = 0x00,
+  ESP_OPEN = 0x10
+}; 
+
+/*!
+Structure to describe a ESP8266 connection/session
+*/
+typedef struct _esp
+{
+  /*!
+  State of the current session
+  */
+  uint8_t uiState;
+
+  /*!
+  Device structure of the UART
+  */
+  uart_t tUart;
+
+  /*!
+  Last received character
+  */
+  uint8_t uiPrev;
+
+  /*!
+  Newest received character
+  */
+  uint8_t uiCurr;
+
+  /*!
+  Pointer of the end of the buffer while receiving data.
+  */
+  const char_t* acEnd;
+
+  /*!
+  Pointer to the position of the next character while receiving data.
+  */
+  char_t* acIndex;
+
+} esp_t;
+
+/*!
+This enumeration describes all values/states that can be returned by
+"esp_receive_ex".
+*/
+enum
+{
+  /*!
+  Data line received; further lines available
+  */
+  ESP_LINE_DATA = 0,
+
+  /*!
+  "OK" received; last line
+  */
+  ESP_LINE_OK,
+
+  /*!
+  "ERROR" received; last line
+  */
+  ESP_LINE_ERROR,
+
+  /*!
+  "FAIL" received; last line
+  */
+  ESP_LINE_FAIL,
+
+  /*!
+  Low level error accessing ESP8266
+  */
+  ESP_LINE_FATAL
+};
 
 /*============================================================================*/
 /*                               Prototypen                                   */
 /*============================================================================*/
+/*!
+Open connection to ESP8266
+@param pState Pointer to device structure
+@return EOK = no error
+*/
+uint8_t esp_open(esp_t* pState);
+
+/*!
+Close connection to ESP8266
+@param pState Pointer to device structure
+@return EOK = no error
+*/
+uint8_t esp_close(esp_t* pState);
+
+/*!
+Set the current baudrate of the UART connection
+@param pState Pointer to device structure
+@param uiBaudrate Baudrate to set (default: 115200 bit/s)
+@return EOK = no error
+*/
+uint8_t esp_set_baudrate(esp_t* pState, uint32_t uiBaudrate);
+
+/*!
+Set the current timeout of the UART connection (in [ms])
+@param pState Pointer to device structure
+@param uiTimeout Timeout to set (default: 2000 ms)
+@return EOK = no error
+*/
+uint8_t esp_set_timeout(esp_t* pState, uint16_t uiTimeout);
+
+/*!
+Flush all enquened data from ESP8266
+@param pState Pointer to device structure
+@return EOK = no error
+*/
+uint8_t esp_flush(esp_t* pState);
+
+/*!
+Sending a AT-command to ESP8266. The command must be terminated with CR+LF.
+@param pState Pointer to device structure
+@param acBuffer Pointer to a buffer containing the data to send (incl. CR+LF)
+@return EOK = no error; EBREAK = user break
+*/
+uint8_t esp_transmit(esp_t* pState, char_t* acBuffer);
+
+/*!
+Reading one line in textmode from ESP8266.
+@param pState Pointer to device structure
+@param acBuffer Pointer to a buffer to copy the line to
+@param uiSize Size of the buffer [byte]
+@return EOK = no error; EBREAK = user break
+*/
+uint8_t esp_receive(esp_t* pState, char_t* acBuffer, uint16_t uiSize);
+
+/*!
+Receive one line in textmode from ESP8266.
+@param pState Pointer to device structure
+@param acBuffer Pointer to a buffer to copy the line to
+@param uiSize Size of the buffer [byte]
+@return "ESP_LINE_DATA" if valid line of data received; "ESP_LINE_OK" if end of
+        transmission successfully reached
+*/
+uint8_t esp_receive_ex(esp_t* pState, char_t* acBuffer, uint16_t uiSize);
 
 /*============================================================================*/
 /*                               Klassen                                      */
@@ -78,40 +241,7 @@
 /*============================================================================*/
 
 /*----------------------------------------------------------------------------*/
-/* zxn_gotoxy()                                                               */
-/*----------------------------------------------------------------------------*/
-void zxn_gotoxy(uint8_t uiX, uint8_t uiY)
-{
-  /*
-  4,x       - Disable (0) or enable (1) vertical scrolling
-
-  8,9,11    - Move in x and y as you would expect
-  12        - Form feed - clears the screen and moves print posn to 0,0
-  10        - Line feed - advances y and sets x to 0
-  13        - Carriage return - sets x to 0
-  16,n      - Set the ink colour (*)
-  17,n      - Set the paper colour (*)
-  20,n      - Enable/disable inverse video (*)
-  22,y,x    - Move to position y,x on the screen (0<=y<=23, 0<=x<=63)
-              NB. y and x are displaced by 32 eg to move the print position
-              to (0,0) use 22,32,32.
-
-  The parameter for those marked with (*) is taken as a bitwise and of the
-  lower 4 bits. Typically these are offset to [0-9] for the lower values.
-
-  11/16/2025 SZ: If using offset "32", then "not implemented" from CRT30 
-  12/30/2025 SZ: If using offset "1", then "not implemented" from CRT30 
-  12/30/2025 SZ: If using offset "0", then "not implemented" for col|row=13 
-  12/30/2025 SZ: If using offset "0", then output jumps by +2 for col|row=10 
-  */
-
-  fputc((int) 0x16, stdout);
-  fputc((int) uiY,  stdout);
-  fputc((int) uiX,  stdout);
-  fflush(stdout);
-}
-
-
-/*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
+
+#endif /* __LIBESP_H__ */
