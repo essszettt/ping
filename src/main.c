@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <intrinsic.h>
 #include <arch/zxn.h>
+#include <arch/zxn/esxdos.h>
 #include <input.h>
 #include <input/input_zx.h>
 

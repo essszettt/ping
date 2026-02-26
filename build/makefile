@@ -22,10 +22,10 @@ endif
 BUILD ?= release
 
 ### Source Directories #################
-LIB_DIR = ../lib
-SRC_DIR = ../src
-INC_DIR = ../inc
-BLD_DIR = .
+SRC_DIR := ../src
+INC_DIR := ../inc
+BLD_DIR := .
+LIB_DIR := $(if $(wildcard ../../../lib),../../../lib,../lib)
 
 ### Source Files #######################
 SRCS := $(wildcard $(SRC_DIR)/*.c)
